@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "name": "move-in",
+  "alias": [
+    "move-in-printer.now.sh"
+  ],
+  "builds": [
+    { "src": "api/index.js", "use": "@now/node" },
+    { "src": "public/*", "use": "@now/static" }
+  ],
+  "routes": [
+    { "src": "/api", "dest": "/api/index.js" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ],
+  "env": {
+    "AIRTABLE_API_KEY": "@airtable-api-key"
+  }
+}
