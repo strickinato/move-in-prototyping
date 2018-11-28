@@ -1,7 +1,7 @@
 const R = require('ramda');
-const v2 = "appcPwpCqAgBuCaBT";
+const v3 = "appqtswmsG6mY4XxJ";
 const Airtable = require("airtable");
-const base = new Airtable({apiKey: process.env.AIRTABLE_API_KEY}).base(v2);
+const base = new Airtable({apiKey: process.env.AIRTABLE_API_KEY}).base(v3);
 
 const ITEM_ROOM_FIELD = "Can Be Used In";
 const ITEM_CATEGORY_FIELD = "Type";
