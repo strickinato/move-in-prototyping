@@ -2,13 +2,8 @@ module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
 
 import Browser
 import Card exposing (..)
-import FontAwesome.Attributes as Icon
-import FontAwesome.Brands as Icon
 import FontAwesome.Icon as Icon
-import FontAwesome.Layering as Icon
-import FontAwesome.Solid as Icon
 import FontAwesome.Styles
-import FontAwesome.Transforms as Icon
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
@@ -119,16 +114,49 @@ view model =
 viewCards : Model -> Html Msg
 viewCards model =
     model.cards
-        |> List.map renderCard
+        |> List.map viewCard
         |> List.groupsOf 12
         |> List.intercalate [ div [ class "page-break" ] [] ]
         |> Html.div [ class "wrapper" ]
 
 
-renderCard : Card -> Html Msg
-renderCard card =
-    Html.div [ class "card" ]
-        [ Html.div [ class "card-title" ] [ Html.text <| Card.title card ] ]
+viewCard : Card -> Html Msg
+viewCard card =
+    case card of
+        ItemCard name item ->
+            Html.div [ class "card", class "item" ]
+                [ viewCardTitle card
+                , viewCardRooms card
+                ]
+
+        ActionCard name item ->
+            Html.div [ class "card action" ]
+                [ viewCardTitle card ]
+
+
+viewCardRooms : Card.Card -> Html Msg
+viewCardRooms card =
+    Card.rooms card
+        |> List.map viewRoom
+        |> div [ class "card-rooms" ]
+
+
+viewRoom : Card.Room -> Html Msg
+viewRoom room =
+    Html.div [ class (Card.roomClass room), class "card-room" ]
+        [ Html.text <| Card.roomName room ]
+
+
+viewCardTitle : Card -> Html Msg
+viewCardTitle card =
+    Html.div
+        [ class "card-title" ]
+        [ Html.text <| Card.title card ]
+
+
+nothing : Html Msg
+nothing =
+    Html.text ""
 
 
 

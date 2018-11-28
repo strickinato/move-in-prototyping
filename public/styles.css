@@ -1,20 +1,69 @@
+* {
+    box-sizing: border-box;
+}
+
+/*
+Gotta make sure this prints!
+https://stackoverflow.com/questions/3893986/css-media-print-issues-with-background-color
+*/
+body {
+    -webkit-print-color-adjust: exact !important;
+}
+
 .wrapper {
     font-family: sans-serif;
 }
 
 .card {
     float: left;
-    width: 2in;
-    height: 2.4in;
-    border: 1px solid black;
+    width: 2.4in;
+    height: 4in;
     margin: 0.0125in;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .card-title {
     padding: 8px;
 }
 
+.card.item {
+    border: 8px solid black;
+}
+
+.card-room {
+    padding: 8px;
+}
+
+.card.action {
+    border: 8px dashed black;
+}
 .page-break {
     page-break-after: always;
     display: block;
+}
+
+@media all {
+    .bathroom {
+        background-color: rgba(176, 255, 207, 1);
+    }
+
+    .bedroom {
+        background-color: rgba(188, 239, 174, 1);
+    }
+
+    .living-room {
+        background-color: rgba(197, 185, 161, 1);
+    ;
+    }
+
+    .kitchen {
+        background-color: rgba(172, 131, 149, 1);
+    }
+
+    .any-room {
+        background-color: rgba(177, 85, 145, 1);
+    }
+
 }
