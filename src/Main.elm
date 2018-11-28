@@ -35,13 +35,13 @@ main =
 
 type alias Model =
     { cards : List Card
-    , debug : String
+    , debug : Maybe String
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model [] ""
+    ( Model [] Nothing
     , getCards
     )
 
@@ -85,19 +85,19 @@ update msg model =
                 Err err ->
                     case err of
                         Http.BadUrl string ->
-                            ( { model | debug = string }, Cmd.none )
+                            ( { model | debug = Just string }, Cmd.none )
 
                         Http.Timeout ->
-                            ( { model | debug = "TIMEOUT" }, Cmd.none )
+                            ( { model | debug = Just "TIMEOUT" }, Cmd.none )
 
                         Http.NetworkError ->
-                            ( { model | debug = "NETWORK ERROR" }, Cmd.none )
+                            ( { model | debug = Just "NETWORK ERROR" }, Cmd.none )
 
                         Http.BadStatus int ->
-                            ( { model | debug = String.fromInt int }, Cmd.none )
+                            ( { model | debug = Just <| String.fromInt int }, Cmd.none )
 
                         Http.BadBody string ->
-                            ( { model | debug = string }, Cmd.none )
+                            ( { model | debug = Just string }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -111,8 +111,19 @@ view : Model -> Html Msg
 view model =
     div []
         [ FontAwesome.Styles.css
+        , viewDebug model.debug
         , viewCards model
         ]
+
+
+viewDebug : Maybe String -> Html Msg
+viewDebug maybeString =
+    case maybeString of
+        Just string ->
+            Html.text string
+
+        Nothing ->
+            nothing
 
 
 viewCards : Model -> Html Msg
