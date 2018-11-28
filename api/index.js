@@ -28,6 +28,9 @@ module.exports = async (req, res) => {
   const _itemCards = await getItemCards();
   const _actionCards = await getActionCards();
 
+  // for Development CORS
+  // res.setHeader('Access-Control-Allow-Origin', "http://localhost:8000");
+
   const roomsById = R.zipObj(
     _rooms.map( (room) => { return room.id; } ),
     _rooms.map( (room) => { return room.fields["Name"]; } )

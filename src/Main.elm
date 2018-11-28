@@ -45,7 +45,8 @@ init _ =
 getCards : Cmd Msg
 getCards =
     Http.get
-        { url = "http://localhost:3000"
+        --"http://localhost:3000"
+        { url = "https://move-in-printer.now.sh/"
         , expect = Http.expectJson ReceiveData decoder
         }
 
@@ -74,7 +75,6 @@ update msg model =
                         text =
                             List.map Card.title cards
                                 |> String.concat
-                                |> Debug.log "Card Titles"
                     in
                     ( { model | cards = cards }, Cmd.none )
 
