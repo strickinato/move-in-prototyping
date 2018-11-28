@@ -50,7 +50,7 @@ getCards : Cmd Msg
 getCards =
     Http.get
         --"http://localhost:3000"
-        { url = "https://move-in-printer.now.sh/"
+        { url = "https://move-in-printer.now.sh/api"
         , expect = Http.expectJson ReceiveData decoder
         }
 
