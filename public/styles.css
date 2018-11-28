@@ -1,0 +1,20 @@
+.wrapper {
+    font-family: sans-serif;
+}
+
+.card {
+    float: left;
+    width: 2in;
+    height: 2.4in;
+    border: 1px solid black;
+    margin: 0.0125in;
+}
+
+.card-title {
+    padding: 8px;
+}
+
+.page-break {
+    page-break-after: always;
+    display: block;
+}

@@ -2,9 +2,19 @@ module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
 
 import Browser
 import Card exposing (..)
+import FontAwesome.Attributes as Icon
+import FontAwesome.Brands as Icon
+import FontAwesome.Icon as Icon
+import FontAwesome.Layering as Icon
+import FontAwesome.Solid as Icon
+import FontAwesome.Styles
+import FontAwesome.Transforms as Icon
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Http
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline as Pipeline
+import List.Extra as List
 
 
 
@@ -40,8 +50,8 @@ init _ =
 getCards : Cmd Msg
 getCards =
     Http.get
-        { url = "https://move-in-printer.now.sh/api"
-        , expect = Http.expectJson ReceiveData Decode.string
+        { url = "http://localhost:3000"
+        , expect = Http.expectJson ReceiveData decoder
         }
 
 
@@ -49,9 +59,14 @@ getCards =
 -- UPDATE
 
 
+decoder : Decoder (List Card)
+decoder =
+    Decode.field "cards" (Decode.list Card.decode)
+
+
 type Msg
     = NoOp
-    | ReceiveData (Result Http.Error String)
+    | ReceiveData (Result Http.Error (List Card))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -59,8 +74,14 @@ update msg model =
     case msg of
         ReceiveData result ->
             case result of
-                Ok yay ->
-                    ( { model | debug = yay }, Cmd.none )
+                Ok cards ->
+                    let
+                        text =
+                            List.map Card.title cards
+                                |> String.concat
+                                |> Debug.log "Card Titles"
+                    in
+                    ( { model | cards = cards }, Cmd.none )
 
                 Err err ->
                     case err of
@@ -89,7 +110,25 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.text model.debug
+    div []
+        [ FontAwesome.Styles.css
+        , viewCards model
+        ]
+
+
+viewCards : Model -> Html Msg
+viewCards model =
+    model.cards
+        |> List.map renderCard
+        |> List.groupsOf 12
+        |> List.intercalate [ div [ class "page-break" ] [] ]
+        |> Html.div [ class "wrapper" ]
+
+
+renderCard : Card -> Html Msg
+renderCard card =
+    Html.div [ class "card" ]
+        [ Html.div [ class "card-title" ] [ Html.text <| Card.title card ] ]
 
 
 

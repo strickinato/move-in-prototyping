@@ -1,17 +1,22 @@
-module Card exposing (Action(..), Card(..), Category(..), Item(..), Quality(..), Room(..), Rules, Space(..), Stats(..), Vibe(..), decode)
+module Card exposing (Action(..), Card(..), Category(..), Item(..), Name(..), Quality(..), Room(..), Rules, Space(..), Stats(..), Vibe(..), decode, decodeRoom, roomDecoder, title)
 
 import Json.Decode as Decode exposing (..)
+import Json.Decode.Pipeline as Pipeline
 
 
 type Card
-    = ItemCard Item
-    | ActionCard Action
+    = ItemCard Name Item
+    | ActionCard Name Action
 
 
 type Item
     = Any Stats
     | Single Room Stats
     | Multiple (List ( Room, Stats ))
+
+
+type Name
+    = Name String
 
 
 type Action
@@ -61,9 +66,62 @@ type Vibe
     | Fancy
 
 
+title : Card -> String
+title card =
+    case card of
+        ItemCard (Name name) _ ->
+            name
+
+        ActionCard (Name name) _ ->
+            name
+
+
 decode : Decoder Card
 decode =
-    succeed <| ActionCard <| Action "Hi"
+    Decode.field "_type" Decode.string
+        |> Decode.andThen typeDecode
+
+
+typeDecode : String -> Decoder Card
+typeDecode string =
+    case string of
+        "item" ->
+            itemCardDecoder
+
+        "action" ->
+            actionCardDecoder
+
+        _ ->
+            ("Not a correct type of card: " ++ string)
+                |> Decode.fail
+
+
+itemCardDecoder : Decoder Card
+itemCardDecoder =
+    Decode.succeed (\a -> ItemCard a (Any defaultStats))
+        |> Pipeline.required "Card Title" nameDecoder
+
+
+actionCardDecoder : Decoder Card
+actionCardDecoder =
+    Decode.succeed ActionCard
+        |> Pipeline.required "Name" nameDecoder
+        |> Pipeline.required "Description" actionDecoder
+
+
+actionDecoder : Decoder Action
+actionDecoder =
+    Decode.map Action Decode.string
+
+
+nameDecoder : Decoder Name
+nameDecoder =
+    Decode.map Name Decode.string
+
+
+defaultStats : Stats
+defaultStats =
+    Stats (Quality 1) (Space -1) NoCategory NoVibe "Hi"
 
 
 decodeRoom : Decoder Room
