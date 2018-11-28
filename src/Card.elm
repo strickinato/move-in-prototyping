@@ -13,6 +13,8 @@ module Card exposing
     , actionCardDecoder
     , actionDecoder
     , anyDecoder
+    , categories
+    , categoryIcon
     , decode
     , decodeRoom
     , defaultStats
@@ -33,6 +35,7 @@ module Card exposing
 
 import FontAwesome.Attributes as Icon
 import FontAwesome.Brands as Icon
+import FontAwesome.Icon exposing (Icon)
 import FontAwesome.Layering as Icon
 import FontAwesome.Solid as Icon
 import FontAwesome.Transforms as Icon
@@ -42,7 +45,7 @@ import Result.Extra as Result
 
 
 type Card
-    = ItemCard Name Item
+    = ItemCard Name (List Category) Item
     | ActionCard Name Action
 
 
@@ -65,7 +68,7 @@ type alias Rules =
 
 
 type Stats
-    = Stats Quality Space Category Vibe Rules
+    = Stats Quality Space Vibe Rules
 
 
 type Quality
@@ -107,7 +110,7 @@ type Vibe
 title : Card -> String
 title card =
     case card of
-        ItemCard (Name name) _ ->
+        ItemCard (Name name) _ _ ->
             name
 
         ActionCard (Name name) _ ->
@@ -155,7 +158,7 @@ roomName room =
 rooms : Card -> List Room
 rooms card =
     case card of
-        ItemCard _ item ->
+        ItemCard _ _ item ->
             case item of
                 Any _ ->
                     [ AnyRoom ]
@@ -195,6 +198,7 @@ itemCardDecoder : Decoder Card
 itemCardDecoder =
     Decode.succeed ItemCard
         |> Pipeline.required "Card Title" nameDecoder
+        |> Pipeline.required "categories" (Decode.list categoryDecoder)
         |> Pipeline.custom itemDecoder
 
 
@@ -224,7 +228,7 @@ anyDecoder =
 
 singleDecoder : String -> Decoder Item
 singleDecoder single =
-    Decode.map (\r -> Single r defaultStats) (roomDecoder single)
+    Decode.map (\r -> Single r defaultStats) (decodeRoom single)
 
 
 multipleDecoder : List String -> Decoder Item
@@ -251,21 +255,6 @@ multipleDecoder multiple =
         |> decodeResult
 
 
-
--- Result x (List Room)
--- let
---     fn : List String -> Decoder (List Room)
---     fn a =
---         Decode.succeed a
---             |> Decode.map
--- in
--- Decode.andThen fn (Decode.list decodeRoom)
---     |> Decode.map intoMultiple
--- let
--- in
--- Decode.map intoMultiple (Decode.list decodeRoom)
-
-
 actionCardDecoder : Decoder Card
 actionCardDecoder =
     Decode.succeed ActionCard
@@ -285,13 +274,23 @@ nameDecoder =
 
 defaultStats : Stats
 defaultStats =
-    Stats (Quality 1) (Space -1) NoCategory NoVibe "Hi"
+    Stats (Quality 1) (Space -1) NoVibe "Hi"
 
 
-decodeRoom : Decoder Room
-decodeRoom =
+roomDecoder : Decoder Room
+roomDecoder =
     Decode.string
-        |> Decode.andThen roomDecoder
+        |> Decode.andThen decodeRoom
+
+
+decodeRoom : String -> Decoder Room
+decodeRoom string =
+    case toRoom string of
+        Ok room ->
+            Decode.succeed room
+
+        Err msg ->
+            Decode.fail msg
 
 
 toRoom : String -> Result String Room
@@ -316,11 +315,104 @@ toRoom string =
             Err ("String for room doesn't match: " ++ string)
 
 
-roomDecoder : String -> Decoder Room
-roomDecoder string =
-    case toRoom string of
-        Ok room ->
-            Decode.succeed room
+categoryDecoder : Decoder Category
+categoryDecoder =
+    Decode.string
+        |> Decode.andThen decodeCategory
+
+
+decodeCategory : String -> Decoder Category
+decodeCategory string =
+    case toCategory string of
+        Ok category ->
+            Decode.succeed category
 
         Err msg ->
             Decode.fail msg
+
+
+toCategory : String -> Result String Category
+toCategory string =
+    case string of
+        "Cooking Device" ->
+            Ok CookingDevice
+
+        "Cold Food Storage" ->
+            Ok ColdFoodStorage
+
+        "Toilet" ->
+            Ok Toilet
+
+        "Bathing" ->
+            Ok Bathing
+
+        "Sink" ->
+            Ok Sink
+
+        "Decor" ->
+            Ok Decor
+
+        "Seating" ->
+            Ok Seating
+
+        "Table Space" ->
+            Ok TableSpace
+
+        "Bed" ->
+            Ok Bed
+
+        "Dresser" ->
+            Ok Dresser
+
+        "None" ->
+            Ok NoCategory
+
+        _ ->
+            Err ("String for category doesn't match: " ++ string)
+
+
+categories : Card -> List Category
+categories card =
+    case card of
+        ItemCard _ categoryList _ ->
+            categoryList
+
+        ActionCard _ _ ->
+            []
+
+
+categoryIcon : Category -> Maybe ( String, String )
+categoryIcon category =
+    case category of
+        NoCategory ->
+            Nothing
+
+        Toilet ->
+            Just ( "🚽", "toilet" )
+
+        Bathing ->
+            Just ( "🛀", "bathing" )
+
+        Sink ->
+            Just ( "🚰", "sink" )
+
+        Bed ->
+            Just ( "🛌", "bed" )
+
+        TableSpace ->
+            Just ( "🛄", "table" )
+
+        Dresser ->
+            Just ( "🗄️", "dresser" )
+
+        CookingDevice ->
+            Just ( "🍳", "cooking device" )
+
+        ColdFoodStorage ->
+            Just ( "❄", "cold food storage" )
+
+        Seating ->
+            Just ( "💺", "seating" )
+
+        Decor ->
+            Just ( "🖼️", "decor" )

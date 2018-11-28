@@ -12,6 +12,10 @@ import Json.Decode.Pipeline as Pipeline
 import List.Extra as List
 
 
+numPrintedPerPage =
+    9
+
+
 
 -- MAIN
 
@@ -115,7 +119,7 @@ viewCards : Model -> Html Msg
 viewCards model =
     model.cards
         |> List.map viewCard
-        |> List.groupsOf 12
+        |> List.groupsOf numPrintedPerPage
         |> List.intercalate [ div [ class "page-break" ] [] ]
         |> Html.div [ class "wrapper" ]
 
@@ -123,20 +127,21 @@ viewCards model =
 viewCard : Card -> Html Msg
 viewCard card =
     case card of
-        ItemCard name item ->
+        ItemCard name category stats ->
             Html.div [ class "card", class "item" ]
-                [ viewCardTitle card
-                , viewCardRooms card
+                [ viewCardTitle <| Card.title card
+                , viewCategories <| Card.categories card
+                , viewCardRooms <| Card.rooms card
                 ]
 
         ActionCard name item ->
             Html.div [ class "card action" ]
-                [ viewCardTitle card ]
+                [ viewCardTitle <| Card.title card ]
 
 
-viewCardRooms : Card.Card -> Html Msg
-viewCardRooms card =
-    Card.rooms card
+viewCardRooms : List Card.Room -> Html Msg
+viewCardRooms rooms =
+    rooms
         |> List.map viewRoom
         |> div [ class "card-rooms" ]
 
@@ -147,11 +152,31 @@ viewRoom room =
         [ Html.text <| Card.roomName room ]
 
 
-viewCardTitle : Card -> Html Msg
-viewCardTitle card =
+viewCategories : List Card.Category -> Html Msg
+viewCategories categories =
+    categories
+        |> List.map viewCategory
+        |> div [ class "card-categories" ]
+
+
+viewCategory : Card.Category -> Html Msg
+viewCategory category =
+    Html.div [ class "card-category" ] <|
+        case Card.categoryIcon category of
+            Just ( emoji, label ) ->
+                [ Html.div [ class "category-emoji" ] [ Html.text emoji ]
+                , Html.div [ class "category-label" ] [ Html.text label ]
+                ]
+
+            Nothing ->
+                [ nothing ]
+
+
+viewCardTitle : String -> Html Msg
+viewCardTitle string =
     Html.div
         [ class "card-title" ]
-        [ Html.text <| Card.title card ]
+        [ Html.text <| string ]
 
 
 nothing : Html Msg

@@ -17,7 +17,7 @@ body {
 .card {
     float: left;
     width: 2.4in;
-    height: 4in;
+    height: 3.2in;
     margin: 0.0125in;
     display: flex;
     flex-direction: column;
@@ -36,34 +36,51 @@ body {
     padding: 8px;
 }
 
+.card-categories {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 8px;
+}
+.card-category {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+.category-emoji {
+    font-size: 36px;
+}
+.category-label {
+    font-size: 10px;
+}
+
 .card.action {
     border: 8px dashed black;
 }
+
+.bathroom {
+    background-color: rgba(176, 255, 207, 1);
+}
+
+.bedroom {
+    background-color: rgba(188, 239, 174, 1);
+}
+
+.living-room {
+    background-color: rgba(197, 185, 161, 1);
+}
+
+.kitchen {
+    background-color: rgba(172, 131, 149, 1);
+}
+
+.any-room {
+    background-color: rgba(177, 85, 145, 1);
+}
+
 .page-break {
     page-break-after: always;
     display: block;
-}
-
-@media all {
-    .bathroom {
-        background-color: rgba(176, 255, 207, 1);
-    }
-
-    .bedroom {
-        background-color: rgba(188, 239, 174, 1);
-    }
-
-    .living-room {
-        background-color: rgba(197, 185, 161, 1);
-    ;
-    }
-
-    .kitchen {
-        background-color: rgba(172, 131, 149, 1);
-    }
-
-    .any-room {
-        background-color: rgba(177, 85, 145, 1);
-    }
-
 }
