@@ -49,7 +49,7 @@ init _ =
 getCards : Cmd Msg
 getCards =
     Http.get
-        --"http://localhost:3000"
+        -- { url = "http://localhost:3000"
         { url = "https://move-in-printer.now.sh/api"
         , expect = Http.expectJson ReceiveData decoder
         }
@@ -147,7 +147,15 @@ viewCard card =
 
         ActionCard name item ->
             Html.div [ class "card action" ]
-                [ viewCardTitle <| Card.title card ]
+                [ viewCardTitle <| Card.title card
+                , viewCardDescription <| Card.description card
+                ]
+
+
+viewCardDescription : String -> Html Msg
+viewCardDescription string =
+    Html.div [ class "card action-description" ]
+        [ Html.text string ]
 
 
 viewCardRooms : List Card.Room -> Html Msg

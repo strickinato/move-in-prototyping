@@ -18,6 +18,7 @@ module Card exposing
     , decode
     , decodeRoom
     , defaultStats
+    , description
     , itemCardDecoder
     , itemDecoder
     , multipleDecoder
@@ -172,6 +173,16 @@ rooms card =
 
         ActionCard name item ->
             []
+
+
+description : Card -> String
+description card =
+    case card of
+        ItemCard _ _ _ ->
+            ""
+
+        ActionCard _ (Action string) ->
+            string
 
 
 decode : Decoder Card
