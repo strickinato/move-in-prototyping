@@ -21,19 +21,56 @@ body {
     margin: 0.0125in;
     display: flex;
     flex-direction: column;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.card-main {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.card-category-border {
+    width: 24px;
+    padding-left: 4px;
+    display: flex;
+    flex-direction: column;
     justify-content: space-between;
 }
 
 .card-title {
     padding: 8px;
+    flex-grow: 1;
+    font-size: 24px;
 }
 
 .card.item {
     border: 8px solid black;
 }
 
+.card-rooms {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    font-size: 14px;
+}
+
 .card-room {
     padding: 8px;
+    flex-grow: 1;
+    /* for it's children */
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.card-room-points {
+    padding-right: 4px;
 }
 
 .card-categories {
@@ -50,8 +87,9 @@ body {
 }
 
 .category-emoji {
-    font-size: 36px;
+    font-size: 18px;
 }
+
 .category-label {
     font-size: 10px;
 }

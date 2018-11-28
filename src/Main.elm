@@ -2,6 +2,7 @@ module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
 
 import Browser
 import Card exposing (..)
+import Card.Room as Room exposing (..)
 import FontAwesome.Icon as Icon
 import FontAwesome.Styles
 import Html exposing (..)
@@ -138,11 +139,23 @@ viewCards model =
 viewCard : Card -> Html Msg
 viewCard card =
     case card of
-        ItemCard name category stats ->
+        ItemCard name category _ stats ->
             Html.div [ class "card", class "item" ]
-                [ viewCardTitle <| Card.title card
-                , viewCategories <| Card.categories card
-                , viewCardRooms <| Card.rooms card
+                [ Html.div [ class "card-header" ]
+                    [ viewCardRooms <| Card.roomsWithPoints card ]
+                , Html.div [ class "card-content" ]
+                    [ Html.div [ class "card-category-border" ]
+                        (Card.categories card
+                            |> List.repeat 8
+                            |> List.concat
+                            |> List.take 8
+                            |> List.map viewCategory
+                        )
+                    , Html.div [ class "card-main" ]
+                        [ viewCardTitle <| Card.title card
+                        , viewCardDescription <| Card.description card
+                        ]
+                    ]
                 ]
 
         ActionCard name item ->
@@ -152,23 +165,30 @@ viewCard card =
                 ]
 
 
-viewCardDescription : String -> Html Msg
-viewCardDescription string =
-    Html.div [ class "card action-description" ]
-        [ Html.text string ]
+viewCardDescription : Maybe String -> Html Msg
+viewCardDescription maybeString =
+    let
+        render string =
+            Html.div [ class "card action-description" ]
+                [ Html.text string ]
+    in
+    Maybe.map render maybeString
+        |> Maybe.withDefault nothing
 
 
-viewCardRooms : List Card.Room -> Html Msg
+viewCardRooms : List ( Room, Int ) -> Html Msg
 viewCardRooms rooms =
     rooms
         |> List.map viewRoom
         |> div [ class "card-rooms" ]
 
 
-viewRoom : Card.Room -> Html Msg
-viewRoom room =
-    Html.div [ class (Card.roomClass room), class "card-room" ]
-        [ Html.text <| Card.roomName room ]
+viewRoom : ( Room, Int ) -> Html Msg
+viewRoom ( room, qualityPoints ) =
+    Html.div [ class <| Room.className room, class "card-room" ]
+        [ div [ class "card-room-name" ] [ Html.text <| Room.displayName room ]
+        , div [ class "card-room-points" ] [ Html.text <| String.fromInt qualityPoints ]
+        ]
 
 
 viewCategories : List Card.Category -> Html Msg
@@ -184,7 +204,6 @@ viewCategory category =
         case Card.categoryIcon category of
             Just ( emoji, label ) ->
                 [ Html.div [ class "category-emoji" ] [ Html.text emoji ]
-                , Html.div [ class "category-label" ] [ Html.text label ]
                 ]
 
             Nothing ->

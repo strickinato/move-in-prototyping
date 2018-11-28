@@ -5,7 +5,6 @@ module Card exposing
     , Item(..)
     , Name(..)
     , Quality(..)
-    , Room(..)
     , Rules
     , Space(..)
     , Stats(..)
@@ -14,26 +13,25 @@ module Card exposing
     , actionDecoder
     , anyDecoder
     , categories
+    , categoryDecoder
     , categoryIcon
     , decode
-    , decodeRoom
+    , decodeCategory
     , defaultStats
     , description
     , itemCardDecoder
     , itemDecoder
     , multipleDecoder
     , nameDecoder
-    , roomClass
-    , roomDecoder
-    , roomName
-    , rooms
     , roomsDecoder
+    , roomsWithPoints
     , singleDecoder
     , title
-    , toRoom
+    , toCategory
     , typeDecode
     )
 
+import Card.Room as Room exposing (Room(..))
 import FontAwesome.Attributes as Icon
 import FontAwesome.Brands as Icon
 import FontAwesome.Icon exposing (Icon)
@@ -46,7 +44,7 @@ import Result.Extra as Result
 
 
 type Card
-    = ItemCard Name (List Category) Item
+    = ItemCard Name (List Category) (Maybe Notes) Item
     | ActionCard Name Action
 
 
@@ -64,12 +62,16 @@ type Action
     = Action Rules
 
 
+type alias Notes =
+    String
+
+
 type alias Rules =
     String
 
 
 type Stats
-    = Stats Quality Space Vibe Rules
+    = Stats Quality Space
 
 
 type Quality
@@ -78,14 +80,6 @@ type Quality
 
 type Space
     = Space Int
-
-
-type Room
-    = Bathroom
-    | Bedroom
-    | LivingRoom
-    | Kitchen
-    | AnyRoom
 
 
 type Category
@@ -111,78 +105,43 @@ type Vibe
 title : Card -> String
 title card =
     case card of
-        ItemCard (Name name) _ _ ->
+        ItemCard (Name name) _ _ _ ->
             name
 
         ActionCard (Name name) _ ->
             name
 
 
-roomClass : Room -> String
-roomClass room =
-    case room of
-        Bathroom ->
-            "bathroom"
-
-        Bedroom ->
-            "bedroom"
-
-        LivingRoom ->
-            "living-room"
-
-        Kitchen ->
-            "kitchen"
-
-        AnyRoom ->
-            "any-room"
-
-
-roomName : Room -> String
-roomName room =
-    case room of
-        Bathroom ->
-            "Bathroom"
-
-        Bedroom ->
-            "Bedroom"
-
-        LivingRoom ->
-            "Living Room"
-
-        Kitchen ->
-            "Kitchen"
-
-        AnyRoom ->
-            "Any"
-
-
-rooms : Card -> List Room
-rooms card =
+roomsWithPoints : Card -> List ( Room, Int )
+roomsWithPoints card =
     case card of
-        ItemCard _ _ item ->
+        ItemCard _ _ _ item ->
             case item of
-                Any _ ->
-                    [ AnyRoom ]
+                Any (Stats (Quality quality) _) ->
+                    [ ( AnyRoom, quality ) ]
 
-                Single room _ ->
-                    [ room ]
+                Single room (Stats (Quality quality) _) ->
+                    [ ( room, quality ) ]
 
                 Multiple roomStuff ->
-                    roomStuff
-                        |> List.map Tuple.first
+                    let
+                        deconstruct ( room, Stats (Quality quality) _ ) =
+                            ( room, quality )
+                    in
+                    List.map deconstruct roomStuff
 
         ActionCard name item ->
             []
 
 
-description : Card -> String
+description : Card -> Maybe String
 description card =
     case card of
-        ItemCard _ _ _ ->
-            ""
+        ItemCard _ _ maybeNotes _ ->
+            maybeNotes
 
         ActionCard _ (Action string) ->
-            string
+            Just string
 
 
 decode : Decoder Card
@@ -210,60 +169,19 @@ itemCardDecoder =
     Decode.succeed ItemCard
         |> Pipeline.required "Card Title" nameDecoder
         |> Pipeline.required "categories" (Decode.list categoryDecoder)
+        |> Pipeline.optional "Rules" (Decode.nullable notesDecoder) Nothing
         |> Pipeline.custom itemDecoder
+
+
+notesDecoder : Decoder Notes
+notesDecoder =
+    Decode.string
 
 
 itemDecoder : Decoder Item
 itemDecoder =
     Decode.field "rooms" (Decode.list Decode.string)
         |> Decode.andThen roomsDecoder
-
-
-roomsDecoder : List String -> Decoder Item
-roomsDecoder roomStrings =
-    case roomStrings of
-        [] ->
-            anyDecoder
-
-        [ single ] ->
-            singleDecoder single
-
-        multiple ->
-            multipleDecoder multiple
-
-
-anyDecoder : Decoder Item
-anyDecoder =
-    Decode.succeed (Any defaultStats)
-
-
-singleDecoder : String -> Decoder Item
-singleDecoder single =
-    Decode.map (\r -> Single r defaultStats) (decodeRoom single)
-
-
-multipleDecoder : List String -> Decoder Item
-multipleDecoder multiple =
-    let
-        intoMultiple : List Room -> Item
-        intoMultiple listRooms =
-            List.map (\room -> ( room, defaultStats )) listRooms
-                |> Multiple
-
-        decodeResult : Result String Item -> Decoder Item
-        decodeResult result =
-            case result of
-                Ok item ->
-                    Decode.succeed item
-
-                Err err ->
-                    Decode.fail err
-    in
-    multiple
-        |> List.map toRoom
-        |> Result.combine
-        |> Result.map intoMultiple
-        |> decodeResult
 
 
 actionCardDecoder : Decoder Card
@@ -285,45 +203,7 @@ nameDecoder =
 
 defaultStats : Stats
 defaultStats =
-    Stats (Quality 1) (Space -1) NoVibe "Hi"
-
-
-roomDecoder : Decoder Room
-roomDecoder =
-    Decode.string
-        |> Decode.andThen decodeRoom
-
-
-decodeRoom : String -> Decoder Room
-decodeRoom string =
-    case toRoom string of
-        Ok room ->
-            Decode.succeed room
-
-        Err msg ->
-            Decode.fail msg
-
-
-toRoom : String -> Result String Room
-toRoom string =
-    case string of
-        "Bathroom" ->
-            Ok Bathroom
-
-        "Bedroom" ->
-            Ok Bedroom
-
-        "Kitchen" ->
-            Ok Kitchen
-
-        "Living Room" ->
-            Ok LivingRoom
-
-        "Any" ->
-            Ok AnyRoom
-
-        _ ->
-            Err ("String for room doesn't match: " ++ string)
+    Stats (Quality 1) (Space -1)
 
 
 categoryDecoder : Decoder Category
@@ -385,7 +265,7 @@ toCategory string =
 categories : Card -> List Category
 categories card =
     case card of
-        ItemCard _ categoryList _ ->
+        ItemCard _ categoryList _ _ ->
             categoryList
 
         ActionCard _ _ ->
@@ -427,3 +307,67 @@ categoryIcon category =
 
         Decor ->
             Just ( "🖼️", "decor" )
+
+
+statsDecoder : Decoder Stats
+statsDecoder =
+    Decode.succeed Stats
+        |> Pipeline.required "Quality Points" qualityDecoder
+        |> Pipeline.required "Space Points" spaceDecoder
+
+
+qualityDecoder : Decoder Quality
+qualityDecoder =
+    Decode.map Quality Decode.int
+
+
+spaceDecoder : Decoder Space
+spaceDecoder =
+    Decode.map Space Decode.int
+
+
+roomsDecoder : List String -> Decoder Item
+roomsDecoder roomStrings =
+    case roomStrings of
+        [] ->
+            anyDecoder
+
+        [ single ] ->
+            singleDecoder single
+
+        multiple ->
+            multipleDecoder multiple
+
+
+anyDecoder : Decoder Item
+anyDecoder =
+    Decode.succeed (Any defaultStats)
+
+
+singleDecoder : String -> Decoder Item
+singleDecoder single =
+    Decode.map (\r -> Single r defaultStats) (Room.decode single)
+
+
+multipleDecoder : List String -> Decoder Item
+multipleDecoder multiple =
+    let
+        intoMultiple : List Room -> Item
+        intoMultiple listRooms =
+            List.map (\room -> ( room, defaultStats )) listRooms
+                |> Multiple
+
+        decodeResult : Result String Item -> Decoder Item
+        decodeResult result =
+            case result of
+                Ok item ->
+                    Decode.succeed item
+
+                Err err ->
+                    Decode.fail err
+    in
+    multiple
+        |> List.map Room.fromString
+        |> Result.combine
+        |> Result.map intoMultiple
+        |> decodeResult
