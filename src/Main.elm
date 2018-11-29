@@ -50,8 +50,8 @@ init _ =
 getCards : Cmd Msg
 getCards =
     Http.get
-        -- { url = "http://localhost:3000"
-        { url = "https://move-in-printer.now.sh/api"
+        -- { url = "https://move-in-printer.now.sh/api"
+        { url = "http://localhost:3000"
         , expect = Http.expectJson ReceiveData decoder
         }
 
@@ -139,7 +139,7 @@ viewCards model =
 viewCard : Card -> Html Msg
 viewCard card =
     case card of
-        ItemCard name category _ stats ->
+        ItemCard (Name name) (Space space) category maybeNotes stats ->
             Html.div [ class "card", class "item" ]
                 [ Html.div [ class "card-header" ]
                     [ viewCardRooms <| Card.roomsWithPoints card ]
@@ -152,17 +152,36 @@ viewCard card =
                             |> List.map viewCategory
                         )
                     , Html.div [ class "card-main" ]
-                        [ viewCardTitle <| Card.title card
-                        , viewCardDescription <| Card.description card
+                        [ viewCardTitle name
+                        , viewCardSpace space
+                        , viewCardDescription maybeNotes
                         ]
                     ]
                 ]
 
-        ActionCard name item ->
-            Html.div [ class "card action" ]
-                [ viewCardTitle <| Card.title card
-                , viewCardDescription <| Card.description card
+        ActionCard (Name name) (Action notes) ->
+            Html.div [ class "card", class "action" ]
+                [ viewCardTitle name
+                , viewCardDescription (Just notes)
                 ]
+
+
+viewCardSpace : Int -> Html Msg
+viewCardSpace numSpaces =
+    let
+        boxes =
+            if numSpaces > 0 then
+                List.repeat numSpaces <|
+                    Html.div [ class "card-space-square" ] [ Html.text "+" ]
+
+            else if numSpaces < 0 then
+                List.repeat (abs numSpaces) <|
+                    Html.div [ class "card-space-square" ] [ Html.text "-" ]
+
+            else
+                [ Html.text "NO SPACE!" ]
+    in
+    Html.div [ class "card-space-points" ] boxes
 
 
 viewCardDescription : Maybe String -> Html Msg

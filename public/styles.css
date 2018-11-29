@@ -11,7 +11,7 @@ body {
 }
 
 .wrapper {
-    font-family: "Comic Sans MS", sans-serif;
+    font-family: "Lucida Console", Monaco, monospace
 }
 
 .card {
@@ -45,7 +45,6 @@ body {
 
 .card-title {
     padding: 8px;
-    flex-grow: 1;
     font-size: 24px;
 }
 
@@ -71,6 +70,30 @@ body {
 
 .card-room-points {
     padding-right: 4px;
+    font-size: 18px;
+    background-color: white;
+    width: 24px;
+    border-radius: 50%;
+    text-align: center;
+}
+
+.card-space-points {
+    padding-left: 8px;
+    /* as a child */
+    flex-grow: 1;
+
+    /* as a parent */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.card-space-square {
+    height: 32px;
+    width: 32px;
+    border: 1px solid black;
+    text-align: center;
+    line-height: 32px;
 }
 
 .card-categories {

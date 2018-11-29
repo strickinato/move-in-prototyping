@@ -18,7 +18,6 @@ module Card exposing
     , decode
     , decodeCategory
     , defaultStats
-    , description
     , itemCardDecoder
     , itemDecoder
     , multipleDecoder
@@ -44,7 +43,7 @@ import Result.Extra as Result
 
 
 type Card
-    = ItemCard Name (List Category) (Maybe Notes) Item
+    = ItemCard Name Space (List Category) (Maybe Notes) Item
     | ActionCard Name Action
 
 
@@ -71,7 +70,7 @@ type alias Rules =
 
 
 type Stats
-    = Stats Quality Space
+    = Stats Quality
 
 
 type Quality
@@ -105,7 +104,7 @@ type Vibe
 title : Card -> String
 title card =
     case card of
-        ItemCard (Name name) _ _ _ ->
+        ItemCard (Name name) _ _ _ _ ->
             name
 
         ActionCard (Name name) _ ->
@@ -115,33 +114,23 @@ title card =
 roomsWithPoints : Card -> List ( Room, Int )
 roomsWithPoints card =
     case card of
-        ItemCard _ _ _ item ->
+        ItemCard _ _ _ _ item ->
             case item of
-                Any (Stats (Quality quality) _) ->
+                Any (Stats (Quality quality)) ->
                     [ ( AnyRoom, quality ) ]
 
-                Single room (Stats (Quality quality) _) ->
+                Single room (Stats (Quality quality)) ->
                     [ ( room, quality ) ]
 
                 Multiple roomStuff ->
                     let
-                        deconstruct ( room, Stats (Quality quality) _ ) =
+                        deconstruct ( room, Stats (Quality quality) ) =
                             ( room, quality )
                     in
                     List.map deconstruct roomStuff
 
         ActionCard name item ->
             []
-
-
-description : Card -> Maybe String
-description card =
-    case card of
-        ItemCard _ _ maybeNotes _ ->
-            maybeNotes
-
-        ActionCard _ (Action string) ->
-            Just string
 
 
 decode : Decoder Card
@@ -168,6 +157,7 @@ itemCardDecoder : Decoder Card
 itemCardDecoder =
     Decode.succeed ItemCard
         |> Pipeline.required "Card Title" nameDecoder
+        |> Pipeline.required "Space Points" spaceDecoder
         |> Pipeline.required "categories" (Decode.list categoryDecoder)
         |> Pipeline.optional "Rules" (Decode.nullable notesDecoder) Nothing
         |> Pipeline.custom itemDecoder
@@ -203,7 +193,7 @@ nameDecoder =
 
 defaultStats : Stats
 defaultStats =
-    Stats (Quality 1) (Space -1)
+    Stats (Quality 1)
 
 
 categoryDecoder : Decoder Category
@@ -265,7 +255,7 @@ toCategory string =
 categories : Card -> List Category
 categories card =
     case card of
-        ItemCard _ categoryList _ _ ->
+        ItemCard _ _ categoryList _ _ ->
             categoryList
 
         ActionCard _ _ ->
@@ -313,7 +303,6 @@ statsDecoder : Decoder Stats
 statsDecoder =
     Decode.succeed Stats
         |> Pipeline.required "Quality Points" qualityDecoder
-        |> Pipeline.required "Space Points" spaceDecoder
 
 
 qualityDecoder : Decoder Quality
@@ -323,7 +312,18 @@ qualityDecoder =
 
 spaceDecoder : Decoder Space
 spaceDecoder =
-    Decode.map Space Decode.int
+    let
+        convert str =
+            case String.toInt str of
+                Just int ->
+                    Decode.map Space <| Decode.succeed int
+
+                Nothing ->
+                    Decode.fail
+                        ("What kind of space points are these?" ++ str)
+    in
+    Decode.string
+        |> Decode.andThen convert
 
 
 roomsDecoder : List String -> Decoder Item
