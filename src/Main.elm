@@ -175,10 +175,10 @@ viewVibe : Vibe -> Html Msg
 viewVibe vibe =
     case vibe of
         Fancy ->
-            Html.text "Fancy"
+            Html.div [ class "vibe-text" ] [ Html.text "Fancy" ]
 
         WhiteTrash ->
-            Html.text "White Trash"
+            Html.div [ class "vibe-text" ] [ Html.text "White Trash" ]
 
         NoVibe ->
             nothing

@@ -160,7 +160,6 @@ body {
     display: block;
 }
 
-
 .card.cheat-sheet {
     border: 8px black solid;
     padding-left: 8px;
@@ -175,4 +174,8 @@ body {
 
 .cheat-sheet .room-name {
     font-weight: bold;
+}
+
+.vibe-text {
+    padding-left: 8px;
 }
