@@ -80,15 +80,19 @@ body {
 
 .card-space-points {
     padding-left: 8px;
-    /* as a child */
     flex-grow: 1;
-
-    /* as a parent */
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
 }
 
+.card-space-point-boxes {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+
+.card-space-point-label {
+    font-size: 12px;
+}
 .card-space-square {
     height: 32px;
     width: 32px;

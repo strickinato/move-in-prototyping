@@ -206,8 +206,33 @@ viewCardSpace numSpaces =
 
             else
                 [ Html.text "NO SPACE!" ]
+
+        spaceText =
+            if numSpaces > 0 then
+                String.concat
+                    [ "+"
+                    , String.fromInt numSpaces
+                    , " "
+                    , pluralize "space" "spaces" numSpaces
+                    , ":"
+                    ]
+
+            else if numSpaces < 0 then
+                String.concat
+                    [ String.fromInt numSpaces
+                    , " "
+                    , pluralize "space" "spaces" numSpaces
+                    , ":"
+                    ]
+
+            else
+                ""
     in
-    Html.div [ class "card-space-points" ] boxes
+    Html.div [ class "card-space-points" ]
+        [ Html.div [ class "card-space-point-label" ]
+            [ Html.text spaceText ]
+        , Html.div [ class "card-space-point-boxes" ] boxes
+        ]
 
 
 viewCardDescription : Maybe String -> Html Msg
@@ -301,3 +326,12 @@ viewCheatSheets numCheatSheets categoriesByRoom =
         |> List.map renderRoom
         |> Html.div [ class "card", class "cheat-sheet" ]
         |> List.repeat numCheatSheets
+
+
+pluralize : String -> String -> Int -> String
+pluralize singular plural num =
+    if abs num == 1 then
+        singular
+
+    else
+        plural
