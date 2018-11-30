@@ -73,5 +73,16 @@ module.exports = async (req, res) => {
 
   const cards = R.concat(itemCards, actionCards);
 
-  res.end(JSON.stringify({ cards }));
+  const categoriesByRoom = R.reduce((acc, cat) => {
+    let _acc = acc;
+    cat.fields["Room"]
+        .map( (roomId) => { return roomsById[roomId]; } )
+        .forEach( (room) => {
+          let prevList = _acc[room];
+          _acc[room] = R.append(cat.fields["Name"], prevList);
+        });
+    return _acc;
+  }, {}, _categories);
+
+  res.end(JSON.stringify({ cards, categoriesByRoom }));
 }

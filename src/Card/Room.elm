@@ -1,4 +1,11 @@
-module Card.Room exposing (Room(..), className, decode, displayName, fromString)
+module Card.Room exposing
+    ( Room(..)
+    , asKey
+    , className
+    , decode
+    , displayName
+    , fromString
+    )
 
 import Json.Decode as Decode exposing (Decoder)
 
@@ -79,3 +86,10 @@ displayName room =
 
         AnyRoom ->
             "Any"
+
+
+asKey : Room -> String
+asKey room =
+    displayName room
+        |> String.toLower
+        |> String.replace " " ""

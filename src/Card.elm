@@ -13,11 +13,13 @@ module Card exposing
     , actionDecoder
     , anyDecoder
     , categories
+    , categoriesByRoomDecoder
     , categoryDecoder
     , categoryIcon
     , decode
     , decodeCategory
     , defaultStats
+    , expandForNum
     , itemCardDecoder
     , itemDecoder
     , multipleDecoder
@@ -31,6 +33,8 @@ module Card exposing
     )
 
 import Card.Room as Room exposing (Room(..))
+import Dict
+import Dict.Any as AnyDict exposing (AnyDict)
 import FontAwesome.Attributes as Icon
 import FontAwesome.Brands as Icon
 import FontAwesome.Icon exposing (Icon)
@@ -44,14 +48,18 @@ import Result.Extra as Result
 
 
 type Card
-    = ItemCard Name Space (List Category) (Maybe Notes) Item Vibe
-    | ActionCard Name Action
+    = ItemCard Name Number Space (List Category) (Maybe Notes) Item Vibe
+    | ActionCard Name Number Action
 
 
 type Item
     = Any Stats
     | Single Room Stats
     | Multiple (List ( Room, Stats ))
+
+
+type alias Number =
+    Int
 
 
 type Name
@@ -105,17 +113,58 @@ type Vibe
 title : Card -> String
 title card =
     case card of
-        ItemCard (Name name) _ _ _ _ _ ->
+        ItemCard (Name name) _ _ _ _ _ _ ->
             name
 
-        ActionCard (Name name) _ ->
+        ActionCard (Name name) _ _ ->
             name
+
+
+number : Card -> Int
+number card =
+    case card of
+        ItemCard _ num _ _ _ _ _ ->
+            num
+
+        ActionCard _ num _ ->
+            num
+
+
+categoriesByRoomDecoder : Decoder (AnyDict String Room (List Category))
+categoriesByRoomDecoder =
+    let
+        resolve result =
+            case result of
+                Ok anyDict ->
+                    Decode.succeed anyDict
+
+                Err str ->
+                    Decode.fail str
+
+        toAnyDict dict =
+            Dict.keys dict
+                |> List.map Room.fromString
+                |> Result.combine
+                |> Result.map
+                    (\x ->
+                        List.map2 (\a b -> ( b, a )) (Dict.values dict) x
+                    )
+                |> Result.map (\x -> AnyDict.fromList Room.asKey x)
+                |> resolve
+    in
+    Decode.dict (Decode.list categoryDecoder)
+        |> Decode.andThen toAnyDict
+
+
+expandForNum : Card -> List Card
+expandForNum card =
+    List.repeat (number card) card
 
 
 roomsWithPoints : Card -> List ( Room, Int )
 roomsWithPoints card =
     case card of
-        ItemCard _ _ _ _ item _ ->
+        ItemCard _ _ _ _ _ item _ ->
             case item of
                 Any (Stats (Quality quality)) ->
                     [ ( AnyRoom, quality ) ]
@@ -130,7 +179,7 @@ roomsWithPoints card =
                     in
                     List.map deconstruct roomStuff
 
-        ActionCard name item ->
+        ActionCard _ _ _ ->
             []
 
 
@@ -158,6 +207,7 @@ itemCardDecoder : Decoder Card
 itemCardDecoder =
     Decode.succeed ItemCard
         |> Pipeline.required "Card Title" nameDecoder
+        |> Pipeline.required "Number" Decode.int
         |> Pipeline.required "Space Points" spaceDecoder
         |> Pipeline.required "categories" (Decode.list categoryDecoder)
         |> Pipeline.optional "Rules" (Decode.nullable notesDecoder) Nothing
@@ -269,6 +319,7 @@ actionCardDecoder : Decoder Card
 actionCardDecoder =
     Decode.succeed ActionCard
         |> Pipeline.required "Name" nameDecoder
+        |> Pipeline.required "Number" Decode.int
         |> Pipeline.required "Description" actionDecoder
 
 
@@ -346,10 +397,10 @@ toCategory string =
 categories : Card -> List Category
 categories card =
     case card of
-        ItemCard _ _ categoryList _ _ _ ->
+        ItemCard _ _ _ categoryList _ _ _ ->
             categoryList
 
-        ActionCard _ _ ->
+        ActionCard _ _ _ ->
             []
 
 
@@ -372,7 +423,7 @@ categoryIcon category =
             Just ( "🛌", "bed" )
 
         TableSpace ->
-            Just ( "🛄", "table" )
+            Just ( "🛄", "table space" )
 
         Dresser ->
             Just ( "🗄️", "dresser" )
@@ -381,7 +432,7 @@ categoryIcon category =
             Just ( "🍳", "cooking device" )
 
         ColdFoodStorage ->
-            Just ( "❄", "cold food storage" )
+            Just ( "❄ ", "cold food storage" )
 
         Seating ->
             Just ( "💺", "seating" )

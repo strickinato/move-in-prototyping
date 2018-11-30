@@ -159,3 +159,20 @@ body {
     page-break-after: always;
     display: block;
 }
+
+
+.card.cheat-sheet {
+    border: 8px black solid;
+    padding-left: 8px;
+    padding-top: 8px;
+}
+
+.cheat-sheet ul, li {
+    list-style: none;
+    font-size: 11px;
+    margin: 0;
+}
+
+.cheat-sheet .room-name {
+    font-weight: bold;
+}
