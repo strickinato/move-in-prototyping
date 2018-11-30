@@ -50,8 +50,8 @@ init _ =
 getCards : Cmd Msg
 getCards =
     Http.get
-        -- { url = "https://move-in-printer.now.sh/api"
-        { url = "http://localhost:3000"
+        -- { url = "http://localhost:3000"
+        { url = "https://move-in-printer.now.sh/api"
         , expect = Http.expectJson ReceiveData decoder
         }
 
@@ -139,7 +139,7 @@ viewCards model =
 viewCard : Card -> Html Msg
 viewCard card =
     case card of
-        ItemCard (Name name) (Space space) category maybeNotes stats ->
+        ItemCard (Name name) (Space space) category maybeNotes stats vibe ->
             Html.div [ class "card", class "item" ]
                 [ Html.div [ class "card-header" ]
                     [ viewCardRooms <| Card.roomsWithPoints card ]
@@ -154,7 +154,9 @@ viewCard card =
                     , Html.div [ class "card-main" ]
                         [ viewCardTitle name
                         , viewCardSpace space
-                        , viewCardDescription maybeNotes
+                        , viewVibe vibe
+
+                        -- , viewCardDescription maybeNotes
                         ]
                     ]
                 ]
@@ -166,17 +168,38 @@ viewCard card =
                 ]
 
 
+viewVibe : Vibe -> Html Msg
+viewVibe vibe =
+    case vibe of
+        Fancy ->
+            Html.text "Fancy"
+
+        WhiteTrash ->
+            Html.text "White Trash"
+
+        NoVibe ->
+            nothing
+
+
 viewCardSpace : Int -> Html Msg
 viewCardSpace numSpaces =
     let
         boxes =
             if numSpaces > 0 then
                 List.repeat numSpaces <|
-                    Html.div [ class "card-space-square" ] [ Html.text "+" ]
+                    Html.div
+                        [ class "card-space-square"
+                        , class "positive"
+                        ]
+                        [ Html.text "+" ]
 
             else if numSpaces < 0 then
                 List.repeat (abs numSpaces) <|
-                    Html.div [ class "card-space-square" ] [ Html.text "-" ]
+                    Html.div
+                        [ class "card-space-square"
+                        , class "negative"
+                        ]
+                        [ Html.text "-" ]
 
             else
                 [ Html.text "NO SPACE!" ]

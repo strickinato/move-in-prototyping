@@ -46,6 +46,7 @@ body {
 .card-title {
     padding: 8px;
     font-size: 24px;
+    height: 40%;
 }
 
 .card.item {
@@ -96,6 +97,13 @@ body {
     line-height: 32px;
 }
 
+.card-space-square.positive {
+    background-color: lightGreen;
+}
+
+.card-space-square.negative {
+    background-color: lightcoral;
+}
 .card-categories {
     display: flex;
     flex-direction: row;

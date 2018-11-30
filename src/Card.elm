@@ -39,11 +39,12 @@ import FontAwesome.Solid as Icon
 import FontAwesome.Transforms as Icon
 import Json.Decode as Decode exposing (..)
 import Json.Decode.Pipeline as Pipeline
+import Maybe.Extra as Maybe
 import Result.Extra as Result
 
 
 type Card
-    = ItemCard Name Space (List Category) (Maybe Notes) Item
+    = ItemCard Name Space (List Category) (Maybe Notes) Item Vibe
     | ActionCard Name Action
 
 
@@ -104,7 +105,7 @@ type Vibe
 title : Card -> String
 title card =
     case card of
-        ItemCard (Name name) _ _ _ _ ->
+        ItemCard (Name name) _ _ _ _ _ ->
             name
 
         ActionCard (Name name) _ ->
@@ -114,7 +115,7 @@ title card =
 roomsWithPoints : Card -> List ( Room, Int )
 roomsWithPoints card =
     case card of
-        ItemCard _ _ _ _ item ->
+        ItemCard _ _ _ _ item _ ->
             case item of
                 Any (Stats (Quality quality)) ->
                     [ ( AnyRoom, quality ) ]
@@ -161,6 +162,35 @@ itemCardDecoder =
         |> Pipeline.required "categories" (Decode.list categoryDecoder)
         |> Pipeline.optional "Rules" (Decode.nullable notesDecoder) Nothing
         |> Pipeline.custom itemDecoder
+        |> Pipeline.optional "Vibe" vibeDecoder NoVibe
+
+
+vibeDecoder : Decoder Vibe
+vibeDecoder =
+    let
+        resolve result =
+            case result of
+                Ok vibe ->
+                    Decode.succeed vibe
+
+                Err error ->
+                    Decode.fail error
+    in
+    Decode.string
+        |> Decode.andThen (resolve << vibeFromString)
+
+
+vibeFromString : String -> Result String Vibe
+vibeFromString string =
+    case string of
+        "Fancy" ->
+            Ok Fancy
+
+        "White Trash" ->
+            Ok WhiteTrash
+
+        str ->
+            Err "Not a legit vibe!"
 
 
 notesDecoder : Decoder Notes
@@ -170,8 +200,69 @@ notesDecoder =
 
 itemDecoder : Decoder Item
 itemDecoder =
+    let
+        resolve : Result String Item -> Decoder Item
+        resolve result =
+            case result of
+                Ok item ->
+                    Decode.succeed item
+
+                Err error ->
+                    Decode.fail error
+    in
+    Decode.map2 toItem listRoomDecoder listIntDecoder
+        |> Decode.andThen resolve
+
+
+
+-- Decoder (List Int)
+
+
+listIntDecoder : Decoder (List Int)
+listIntDecoder =
+    Decode.field "Quality Points" Decode.string
+        |> Decode.andThen toIntList
+
+
+toIntList : String -> Decoder (List Int)
+toIntList string =
+    let
+        resolve maybeInts =
+            case maybeInts of
+                Just ints ->
+                    Decode.succeed ints
+
+                Nothing ->
+                    Decode.fail "Something weird went down with the quality points"
+    in
+    string
+        |> String.split ","
+        |> List.map String.toInt
+        |> Maybe.combine
+        |> resolve
+
+
+listRoomDecoder : Decoder (List Room)
+listRoomDecoder =
     Decode.field "rooms" (Decode.list Decode.string)
         |> Decode.andThen roomsDecoder
+
+
+roomsDecoder : List String -> Decoder (List Room)
+roomsDecoder strings =
+    let
+        resolve list =
+            case list of
+                Ok rooms ->
+                    Decode.succeed rooms
+
+                Err error ->
+                    Decode.fail error
+    in
+    strings
+        |> List.map Room.fromString
+        |> Result.combine
+        |> resolve
 
 
 actionCardDecoder : Decoder Card
@@ -255,7 +346,7 @@ toCategory string =
 categories : Card -> List Category
 categories card =
     case card of
-        ItemCard _ _ categoryList _ _ ->
+        ItemCard _ _ categoryList _ _ _ ->
             categoryList
 
         ActionCard _ _ ->
@@ -326,8 +417,33 @@ spaceDecoder =
         |> Decode.andThen convert
 
 
-roomsDecoder : List String -> Decoder Item
-roomsDecoder roomStrings =
+toItem : List Room -> List Int -> Result String Item
+toItem rooms ints =
+    case ( rooms, ints ) of
+        ( [], [ int ] ) ->
+            Ok <| Any (Stats (Quality int))
+
+        ( [ room ], [ int ] ) ->
+            Ok <| Single room (Stats (Quality int))
+
+        ( rooms_, [ int ] ) ->
+            rooms_
+                |> List.map (\r -> ( r, Stats (Quality int) ))
+                |> Multiple
+                |> Ok
+
+        ( rooms_, ints_ ) ->
+            let
+                stats =
+                    List.map (\i -> Stats (Quality i)) ints_
+            in
+            List.map2 (\a b -> ( a, b )) rooms_ stats
+                |> Multiple
+                |> Ok
+
+
+oldRoomsDecoder : List String -> Decoder Item
+oldRoomsDecoder roomStrings =
     case roomStrings of
         [] ->
             anyDecoder

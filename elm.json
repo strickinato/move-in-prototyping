@@ -13,6 +13,7 @@
             "elm/http": "2.0.0",
             "elm/json": "1.1.2",
             "elm-community/list-extra": "8.1.0",
+            "elm-community/maybe-extra": "5.0.0",
             "elm-community/result-extra": "2.2.1",
             "lattyware/elm-fontawesome": "2.1.1"
         },
